@@ -23,44 +23,44 @@
 	</style>
 </head>
 <body>
-    <label id="con">Hello APP</label>
-	<div id='sys-info'></div>
+    <label id="con">Hellos2 APP</label>
+	<div id='content'></div>
+	<div id="online_box"></div>
 </body>
 <script type="text/javascript" src="../script/api.js"></script>
+<script src='http://cdn.bootcss.com/socket.io/1.3.7/socket.io.js'></script>
+<script type="text/javascript" src="../script/zepto.min.js"></script>
 <script type="text/javascript">
     apiready = function(){
-		var ver = api.version;
-		var sType = api.systemType;
-		var sVer = api.systemVersion;
-		var id = api.deviceId;
-		var model = api.deviceModel;
-		var name = api.deviceName;
-		var cType = api.connectionType;
-		var winName = api.winName;
-		var winWidth = api.winWidth;
-		var winHeight = api.winHeight;
-		var frameName = api.frameName || '';
-		var frameWidth = api.frameWidth || '';
-		var frameHeight = api.frameHeight || '';
-
-		var str = '<ul>';
-		str += '<li>引擎版本信息: ' + ver + '</li>';
-		str += '<li>系统类型: ' + sType + '</li>';
-		str += '<li>系统版本: ' + sVer + '</li>';
-		str += '<li>设备标识: ' + id + '</li>';
-		str += '<li>设备型号: ' + model + '</li>';
-		str += '<li>设备名称: ' + name + '</li>';
-		str += '<li>网络状态: ' + cType + '</li>';
-		str += '<li>主窗口名字: ' + winName + '</li>';
-		str += '<li>主窗口宽度: ' + winWidth + '</li>';
-		str += '<li>主窗口高度: ' + winHeight + '</li>';
-		str += '<li>子窗口名字: ' + frameName + '</li>';
-		str += '<li>子窗口宽度: ' + frameWidth + '</li>';
-		str += '<li>子窗口高度: ' + frameHeight + '</li>';
-		str += '</ul>';
-
-		$api.byId('sys-info').innerHTML = str;
-
+    	
+    	//如监听网络连接事件
+       //html页面a：
+      setTimeout(function(){
+            api.sendEvent({
+                name: 'myEvent',
+                extra: {
+                    key1: 'value1',
+                    key2: 'value3'
+                }
+            });
+        },5000);
+       
     };
+    $(document).ready(function () {
+    // 连接服务端
+	    var socket = io('http://www.workerman.net:2120');
+	    // 连接后登录
+	    socket.on('connect', function(){
+	    	socket.emit('login', "lxl");
+	    });
+	    // 后端推送来消息时
+	    socket.on('new_msg', function(msg){
+	         $('#content').html('收到消息：'+msg);
+	    });
+	    // 后端推送来在线数据时
+	    socket.on('update_online_count', function(online_stat){
+	        $('#online_box').html(online_stat);
+	    });
+	});
 </script>
 </html>

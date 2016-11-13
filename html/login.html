@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <title>title</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
+    <link rel="stylesheet" href="../css/login.css">
+    <style>
+        body{
+            
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <h1>登录</h1>
+            
+            <form class="form" onsubmit="return false;">
+                <input type="text" id="phone" name="phone" onchange="checkPhone(this);"  placeholder="手机号">
+                <button type="submit" id="sendVerify">发送验证码</button>
+                <input type="password" id="code" name="code" onchange="checkCode(this)" placeholder="验证码">
+                <button type="submit" id="verify">提交</button>
+            </form>
+        </div>
+        
+        <ul class="bg-bubbles">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
+    </div>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script src="../script/zepto.min.js"></script>
+<script type="text/javascript">
+    apiready = function(){
+        var param={
+            "phone":"",
+            "code":""
+        }
+
+       
+
+        //发送验证码
+        $("#sendVerify").click(function() {
+            if (!param.phone) {
+                api.toast({
+                    "msg":"请输入正确的手机号！"
+                });
+            };
+
+            //发送验证码&智能验证
+        });
+
+        //提交验证
+        $("#verify").click(function(){
+            if (!param.phone||!param.code) {
+                api.toast({
+                    "msg":"请输入正确的手机号和验证码！"
+                });
+            }
+
+            //提交验证
+        });
+    };
+
+     /**
+         * 手机号检测
+         * @param  {[type]} t [description]
+         * @return {[type]}   [description]
+         */
+        function checkPhone(t){
+            var phone=$(t).val();
+            if(!(/^1[34578]\d{9}$/.test(phone))){  
+                api.toast({
+                    "msg":"请输入正确的手机号！"
+                });
+                return false; 
+            }
+            param.phone=phone;
+        }
+
+        /**
+         * 验证码验证
+         * @param  {[type]} t [description]
+         * @return {[type]}   [description]
+         */
+        function checkCode(t){
+            param.code=code;
+        }
+
+   
+
+    
+</script>
+</html>
