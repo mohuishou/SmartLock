@@ -42,23 +42,63 @@
 <script type="text/javascript" src="../script/api.js"></script>
 <script src="../script/zepto.min.js"></script>
 <script type="text/javascript">
-    apiready = function(){
-        var param={
-            "phone":"",
-            "code":""
-        }
+    var param={
+        "phone":"",
+        "code":""
+    }
 
-       
+    apiready = function(){
+
+        var smsVerify = api.require('smsVerify');
+        smsVerify.register(function(ret, err){
+            if(ret.status){
+                // api.alert({msg: '注册成功'});
+            }else{
+                api.alert({msg: err.code+'应用注册失败'});
+            }
+        });
+
+        
 
         //发送验证码
         $("#sendVerify").click(function() {
             if (!param.phone) {
+                countDown(5);
                 api.toast({
                     "msg":"请输入正确的手机号！"
                 });
+                return;
             };
 
             //发送验证码&智能验证
+            smsVerify.sms({
+                phone:param.phone,
+                country:"86"
+            },function(ret, err){
+                if(ret.status){
+                    if( ret.smart == true ){ 
+                        countDown(5);
+
+                        api.toast({
+                            "msg":"智能验证成功！"
+                        });
+
+                        //向父窗口发送登录事件，建立socket连接
+                        api.sendEvent({
+                            name: 'loginEvent',
+                            extra: {
+                                phone:param.phone
+                            }
+                        });
+                    }else{
+                       countDown(120);
+                        api.alert({msg: '短信发送成功'});
+
+                    }
+                }else{
+                    api.alert({msg: err.code+' '+err.msg});
+                }
+            });
         });
 
         //提交验证
@@ -67,9 +107,32 @@
                 api.toast({
                     "msg":"请输入正确的手机号和验证码！"
                 });
+                return;
             }
 
-            //提交验证
+            smsVerify.verify({
+                phone:param.phone,
+                country:"86",
+                code:param.code
+            },function(ret, err){
+                if(ret.status){
+
+                    api.toast({
+                        "msg":"验证成功！"
+                    });
+
+                    //向父窗口发送登录事件，建立socket连接
+                    api.sendEvent({
+                        name: 'login',
+                        extra: {
+                            phone:param.phone
+                        }
+                    });
+                }else{
+                    api.alert({msg: err.code+' '+err.msg});
+                }
+            });
+            
         });
     };
 
@@ -95,7 +158,32 @@
          * @return {[type]}   [description]
          */
         function checkCode(t){
+            var code=$(t).val();
             param.code=code;
+        }
+
+        /**
+         * 验证码发送倒计时
+         * @param  {[type]} t [description]
+         * @return {[type]}   [description]
+         */
+        function countDown(t){
+            if (count) {
+                clearInterval(count);
+            }
+            $("#sendVerify").attr({
+                disabled: true
+            });
+            $("#sendVerify").text(t+"S");
+            var count=setInterval(function(){
+                t--;
+                $("#sendVerify").text(t+"S");
+                if(t<=0){
+                    $("#sendVerify").removeAttr("disabled");
+                    $("#sendVerify").text("发送验证码");
+                    clearInterval(count);
+                }
+            },1000);
         }
 
    
