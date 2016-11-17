@@ -149,7 +149,7 @@
           content: {
               title: 'SmartLock',
               subTitle: '我的SmartLock',
-              illus: 'http://ico.ooopic.com/ajax/iconpng/?id=145044.png'
+              illus: 'widget://img/lock.png'
           },
           styles: {
               titleColor: '#000',
@@ -177,6 +177,8 @@
       if(types==2){
         policy="transit_time_first";
       }
+
+      progressOn();
       setTimeout(function () {
         //搜索导航路线
         aMap.searchRoute({
@@ -188,14 +190,14 @@
             if (ret.status) {
                 aMap.drawRoute({
                     id: 1,
-                    autoresizing: false,
+                    autoresizing: true,
                     index: 0,
                     styles: {
                         walkLine: {
                             width: 3,
                             color: '#698B22',
                             lineDash: false,
-                            strokeImg: ''
+                            strokeImg: 'widget://img/arrow.png'
                         },
                         driveLine: {
                             width: 6,
@@ -218,12 +220,33 @@
                         }
                     }
                 });
+                progressOff();
             } else {
                 api.alert({ msg: "路线规划失败"});
+                progressOff();
             }
         });
       },1000);
 
     }
+
+
+
+
+  function progressOn() {
+    setTimeout(function () {
+      api.showProgress({
+        style: 'default',
+        animationType: 'fade',
+        title: '努力加载中...',
+        text: '请稍后',
+        modal: true
+      });
+    },200);
+  }
+
+  function progressOff() {
+    api.hideProgress();
+  }
 </script>
 </html>

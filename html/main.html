@@ -68,7 +68,7 @@
         <p class="circle-text">设备尚未连接</p>
     </div>
 
-    <div class="circle open-lock status">
+    <div class="circle open-lock status" onclick="openLock();">
         <p class="circle-text">开锁</p>
     </div>
 
@@ -169,6 +169,14 @@
         }
     }
 
+    function openLock() {
+      api.sendEvent({
+          name:'openLockEvent',
+          extra:{
+            lock_id:$api.getStorage("lock_id")
+          }
+      });
+    }
 
     function bind() {
         api.sendEvent({

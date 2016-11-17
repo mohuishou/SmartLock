@@ -48,7 +48,6 @@
     }
 
     apiready = function(){
-
         var smsVerify = api.require('smsVerify');
         smsVerify.register(function(ret, err){
             if(ret.status){
@@ -57,8 +56,6 @@
                 api.alert({msg: err.code+'应用注册失败'});
             }
         });
-
-
 
         //发送验证码
         $("#sendVerify").click(function() {
@@ -95,7 +92,6 @@
                     }else{
                        countDown(120);
                         api.alert({msg: '短信发送成功'});
-
                     }
                 }else{
                     api.alert({msg: err.code+' '+err.msg});
@@ -118,11 +114,9 @@
                 code:param.code
             },function(ret, err){
                 if(ret.status){
-
                     api.toast({
                         "msg":"验证成功！"
                     });
-
                     //向父窗口发送登录事件，建立socket连接
                     api.sendEvent({
                         name: 'loginEvent',

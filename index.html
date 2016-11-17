@@ -60,6 +60,8 @@
 <script src='./script/socket.io.min.js'></script>
 <script type="text/javascript" src="./script/zepto.min.js"></script>
 <script type="text/javascript">
+
+
     var socket_g;
     var domain="http://192.168.12.1:8400";
     apiready = function(){
@@ -73,7 +75,17 @@
             connect(ret.value.phone);
         });
 
+        //监听开锁事件
+        api.addEventListener({
+           name: 'openLockEvent'
+        }, function(ret, err) {
+            api.toast({
+              msg:"开锁命令已发送！"
+            });
+            socket_g.emit("open_lock",ret.value);
+        });
 
+        //监听打开绑定页面
         api.addEventListener({
            name: 'openBindEvent'
         }, function(ret, err) {
@@ -83,6 +95,7 @@
             });
         });
 
+        //监听：打开地图页面
         api.addEventListener({
            name: 'openSearchEvent'
         }, function(ret, err) {
@@ -92,6 +105,7 @@
             });
         });
 
+        //监听：打开主页面
         api.addEventListener({
            name: 'openMainEvent'
         }, function(ret, err) {
@@ -101,7 +115,7 @@
             });
         });
 
-
+        //监听：绑定事件
         api.addEventListener({
            name: 'bindEvent'
         }, function(ret, err) {
@@ -183,8 +197,6 @@
         });
     }
 
-
-
     function connect(phone){
         // alert(phone);
         var socket=io(domain);
@@ -203,7 +215,7 @@
     function open(name){
          var header = $api.byId('header');
         //适配iOS 7+，Android 4.4+状态栏
-        $api.fixStatusBar(header);
+        // $api.fixStatusBar(header);
 
         var headerPos = $api.offset(header);
         var main = $api.byId('main');
@@ -218,9 +230,9 @@
                 w: 'auto',
                 h: mainPos.h
             },
-            fixedOn:name,
-            fixed: true
+            fixedOn:name
         });
     }
+
 </script>
 </html>
