@@ -136,7 +136,7 @@
             open("login");
             return;
         }else{
-            connect($api.getStorage(phone));
+            connect($api.getStorage("phone"));
         }
 
         //已登录，，跳转到主界面
@@ -215,7 +215,7 @@
     function open(name){
          var header = $api.byId('header');
         //适配iOS 7+，Android 4.4+状态栏
-        // $api.fixStatusBar(header);
+        $api.fixStatusBar(header);
 
         var headerPos = $api.offset(header);
         var main = $api.byId('main');
