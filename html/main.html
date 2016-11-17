@@ -1,74 +1,186 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
     <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
     <title>Hello APP</title>
     <link rel="stylesheet" type="text/css" href="../css/api.css" />
-	<style>
+    <link rel="stylesheet" type="text/css" href="../css/btn.css" />
+    <style>
+        .circle {
+            width: 400px;
+            height: 400px;
+            max-width: 80%;
+            background: #CCFF99;
+            position: absolute;
+            text-align: center;
+            color: #efefef;
+            transition: all 1s;
+            -moz-transition: all 1s;
+            /* Firefox 4 */
+            -webkit-transition: all 1s;
+            /* Safari 和 Chrome */
+            -o-transition: all 1s;
+            /* Opera */
+            opacity: 0.8;
+        }
 
-		#circle{
-			width: 400px;
-			height: 400px;
-			max-width: 80%;
-			background: #CCFF99;
-			position: absolute;
-			text-align: center;
-			color: #333;
-			transition: all 1s;
-			-moz-transition: all 1s; /* Firefox 4 */
-			-webkit-transition: all 1s; /* Safari 和 Chrome */
-			-o-transition: all 1s; /* Opera */
-			opacity: 0.8;
-		}
+        .circle:hover {
+            opacity: 1;
+        }
 
-		#circle:hover{
-			opacity: 1;
-		}
+        .circle-text {
+            font-size: 30px;
+        }
 
-		#circle-text{
-			font-size:30px;
-		}
-	</style>
+        .bind {
+            background: #FF6666;
+            display: none;
+        }
+
+        .disconnect {
+            background: #FF9900;
+            display: none;
+        }
+
+        .open-lock {
+            background: #009966;
+            /*display: none;*/
+        }
+
+
+
+        #search{
+          position: absolute;
+          bottom: 30px;
+        }
+    </style>
 </head>
-<body>
 
-    <div id="circle">
-    	<p id="circle-text">尚未连接</p>
+<body>
+    <div class="circle bind status" onclick="bind();">
+        <p class="circle-text">设备尚未绑定</p>
     </div>
-	<div id='content'></div>
-	<div id="online_box"></div>
+
+    <div class="circle disconnect status">
+        <p class="circle-text">设备尚未连接</p>
+    </div>
+
+    <div class="circle open-lock status">
+        <p class="circle-text">开锁</p>
+    </div>
+
+    <div class="circle stolen status">
+        <p class="circle-text">被盗</p>
+    </div>
+
+    <div>
+        <button id="search" onclick="search();" class="btn status">查看地图</button>
+    </div>
+    <div id='content'></div>
+    <div id="online_box"></div>
 </body>
 <script type="text/javascript" src="../script/api.js"></script>
-<script src='http://cdn.bootcss.com/socket.io/1.3.7/socket.io.js'></script>
 <script type="text/javascript" src="../script/zepto.min.js"></script>
 <script type="text/javascript">
-	init();
-    apiready = function(){
-    	
-   
-       
+    apiready = function() {
+        init();
+        setTimeout(function() {
+            checkBind();
+        }, 1000);
+
+        //监听设备连接状态
+        api.addEventListener({
+            name: 'lockStatusEvent'
+        }, function(ret, err) {
+          var data=ret.value;
+            if (!ret.value.status) {
+                var lock_id = $api.getStorage("lock_id");
+                if (!lock_id) {
+                    changeStatus("bind");
+                } else {
+                    changeStatus("disconnect");
+                    alert("设备尚未连接！");
+                }
+            } else {
+                changeStatus("open-lock");
+                if(data.is_stolen!=0){
+                  changeStatus("stolen");
+                  alert("设备被盗，请查看！！");
+                }
+                if(data.is_low_battery==1){
+                  $(".circle-text").append("<br /> 电量不足！");
+                  alert("设备电量不足！");
+                }
+            }
+        });
+
+
+
     };
 
-    function init(){
-    	var c_width=$("#circle").width();
-    	var b_width=$(window).width();
-    	var b_height=$(window).height();
-    	$("#circle").css({
-    		"border-radius":(c_width)/2,
-    		"height":c_width,
-    		"top":(b_height-c_width)/2,
-    		"left":(b_width-c_width)/2
-    	}); 
-    	$("#circle-text").css({
-    		"margin-top":(c_width-$("#circle-text").height())/2
-    	});
+    function init() {
+        var c_width = $(".open-lock").width();
+        console.log(c_width);
+        var b_width = $(window).width();
+        var b_height = $(window).height();
+        $(".circle").css({
+            "border-radius": (c_width) / 2,
+            "height": c_width,
+            "top": (b_height - c_width) / 2,
+            "left": (b_width - c_width) / 2
+        });
+        $(".circle-text").css({
+            "margin-top": (c_width - 15) / 2
+        });
+        $("#search").css({
+          "left" : (b_width - $("#search").width()) / 2
+        });
     }
 
-   
+    //检测绑定状态
+    function checkBind() {
+        var lock_id = $api.getStorage("lock_id");
+        if (!lock_id) {
+            changeStatus("bind");
+        } else {
+            changeStatus("open-lock");
+        }
+    }
 
 
-    
+    function changeStatus(type) {
+        var a={
+          "open-lock":1,
+          "stolen":1
+        }
+        $(".status").css({
+            "display": "none"
+        });
+        $("." + type).css({
+            "display": "block"
+        });
+        if(a[type]){
+          $("#search").css({
+            "display": "block"
+          });
+        }
+    }
+
+
+    function bind() {
+        api.sendEvent({
+            name: 'openBindEvent'
+        });
+    }
+
+    function search() {
+      api.sendEvent({
+          name: 'openSearchEvent'
+      });
+    }
 </script>
+
 </html>

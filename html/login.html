@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="../css/login.css">
     <style>
         body{
-            
+
         }
     </style>
 </head>
@@ -16,7 +16,7 @@
     <div class="wrapper">
         <div class="container">
             <h1>登录</h1>
-            
+
             <form class="form" onsubmit="return false;">
                 <input type="text" id="phone" name="phone" onchange="checkPhone(this);"  placeholder="手机号">
                 <button type="submit" id="sendVerify">发送验证码</button>
@@ -24,7 +24,7 @@
                 <button type="submit" id="verify">提交</button>
             </form>
         </div>
-        
+
         <ul class="bg-bubbles">
             <li></li>
             <li></li>
@@ -58,7 +58,7 @@
             }
         });
 
-        
+
 
         //发送验证码
         $("#sendVerify").click(function() {
@@ -69,6 +69,8 @@
                 });
                 return;
             };
+            $("#sendVerify").attr("disabled",true);
+            $("#sendVerify").text("提交中..");
 
             //发送验证码&智能验证
             smsVerify.sms({
@@ -76,7 +78,7 @@
                 country:"86"
             },function(ret, err){
                 if(ret.status){
-                    if( ret.smart == true ){ 
+                    if( ret.smart == true ){
                         countDown(5);
 
                         api.toast({
@@ -123,7 +125,7 @@
 
                     //向父窗口发送登录事件，建立socket连接
                     api.sendEvent({
-                        name: 'login',
+                        name: 'loginEvent',
                         extra: {
                             phone:param.phone
                         }
@@ -132,7 +134,7 @@
                     api.alert({msg: err.code+' '+err.msg});
                 }
             });
-            
+
         });
     };
 
@@ -143,11 +145,11 @@
          */
         function checkPhone(t){
             var phone=$(t).val();
-            if(!(/^1[34578]\d{9}$/.test(phone))){  
+            if(!(/^1[34578]\d{9}$/.test(phone))){
                 api.toast({
                     "msg":"请输入正确的手机号！"
                 });
-                return false; 
+                return false;
             }
             param.phone=phone;
         }
@@ -186,8 +188,8 @@
             },1000);
         }
 
-   
 
-    
+
+
 </script>
 </html>

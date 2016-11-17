@@ -17,10 +17,10 @@
         <div class="container">
             <h1>绑定设备</h1>
             
-            <form class="form">
-                <input type="text" placeholder="请输入设备ID">
-                <input type="password" placeholder="请输入设备Key">
-                <button type="submit" id="verify">绑定</button>
+            <form class="form" onsubmit="return false;">
+                <input type="text" id="lock-id" name="lock_id" placeholder="请输入设备ID">
+                <input type="password" id="lock-key" name="lock_key" placeholder="请输入设备Key">
+                <button type="submit" id="bind">绑定</button>
             </form>
         </div>
         
@@ -39,12 +39,62 @@
     </div>
 </body>
 <script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/zepto.min.js"></script>
 <script type="text/javascript">
     apiready = function(){
         // $api.setStorage("is_login",true);
+        // 
+        api.addEventListener({
+           name: 'bindResEvent'
+        }, function(ret, err) {
+            bindBtn(1);
+        });
     };
 
-    function send(){
+    $("#bind").click(function(event) {
+
+
+        var param={
+            "uid":"",
+            "lock_id":"",
+            "lock_key":""
+        };
+
+        param.uid=$api.getStorage("uid");
+        param.lock_id=$("#lock-id").val();
+        param.lock_key=$("#lock-key").val();
+
+        if(!param.lock_id){
+            alert("设备id不能为空！");
+            return;
+        }
+
+        if(!param.lock_key){
+            alert("设备key不能为空！");
+            return;
+        }
+        bindBtn(0);
+
+        api.sendEvent({
+            name: 'bindEvent',
+            extra: param
+        });
+
+
+
+    });
+
+
+    function bindBtn(type){
+        if(type==0){
+            $("#bind").attr({
+                disabled:"disabled"
+            });
+            $("#bind").text("提交中...");
+        }else{
+            $("#bind").removeAttr('disabled');
+            $("#bind").text("提交");
+        }
         
     }
 </script>
