@@ -1,0 +1,238 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>Hello APP</title>
+    <link rel="stylesheet" type="text/css" href="./css/api.css" />
+    <style type="text/css">
+    html,body{
+        height: 100%;
+    }
+    #wrap{
+        height: 100%;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: flex;
+        -webkit-box-orient: vertical;
+        -webkit-flex-flow: column;
+               flex-flow: column;
+    }
+    #header{
+        text-align: center; background-color: #81a9c3; color: #fff;
+        width: 100%;
+    }
+    #header h1{
+        font-size: 20px; height: 44px; line-height: 44px; margin: 0em; color: #fff;
+    }
+    #main{
+        -webkit-box-flex: 1;
+        -webkit-flex: 1;
+        flex: 1;
+    }
+    #footer{
+        height: 30px; line-height: 30px;
+        background-color: #81a9c3;
+        width: 100%;
+        text-align: center;
+    }
+    #footer h5{
+        color: white;
+    }
+    .con{font-size: 28px; text-align: center;}
+    </style>
+</head>
+<body>
+    <div id="wrap">
+        <div id="header">
+            <h1>SmartLock</h1>
+        </div>
+        <div id="main">
+
+        </div>
+        <div id="footer">
+            <h5>Copyright &copy;<span id="year">莫回首</span> </h5>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="./script/api.js"></script>
+<script src='./script/socket.io.min.js'></script>
+<script type="text/javascript" src="./script/zepto.min.js"></script>
+<script type="text/javascript">
+
+
+    var socket_g;
+    var domain="http://115.159.94.101:8400";
+    apiready = function(){
+        var domain="http://115.159.94.101:8400";
+        // open("search");
+        // return;
+        //监听登录事件，如果登录成功，建立socket连接,并且跳转到主页面
+        api.addEventListener({
+           name: 'loginEvent'
+        }, function(ret, err) {
+            connect(ret.value.phone);
+        });
+
+        //监听开锁事件
+        api.addEventListener({
+           name: 'openLockEvent'
+        }, function(ret, err) {
+            api.toast({
+              msg:"开锁命令已发送！"
+            });
+            socket_g.emit("open_lock",ret.value);
+        });
+
+        //监听打开绑定页面
+        api.addEventListener({
+           name: 'openBindEvent'
+        }, function(ret, err) {
+            open("bind");
+            api.closeFrame({
+                name: 'main'
+            });
+        });
+
+        //监听：打开地图页面
+        api.addEventListener({
+           name: 'openSearchEvent'
+        }, function(ret, err) {
+            open("search");
+            api.closeFrame({
+                name: 'main'
+            });
+        });
+
+        //监听：打开主页面
+        api.addEventListener({
+           name: 'openMainEvent'
+        }, function(ret, err) {
+            open("main");
+            api.closeFrame({
+                name: 'search'
+            });
+        });
+
+        //监听：绑定事件
+        api.addEventListener({
+           name: 'bindEvent'
+        }, function(ret, err) {
+            socket_g.emit("bind",ret.value);
+        });
+
+
+        //检测用户是否登录，未登录跳转到登录界面
+        var phone=$api.getStorage("phone");
+        if(!(/^1[34578]\d{9}$/.test(phone))){
+            api.toast({
+                "msg":"手机号错误，请重新登录！"
+            });
+            phone=null;
+        }
+        if(!phone||phone==null){
+            //未登录，跳转到登陆界面
+            open("login");
+            return;
+        }else{
+            connect($api.getStorage("phone"));
+        }
+
+        //已登录，，跳转到主界面
+        open("main");
+
+    };
+
+    function socketOn(socket){
+
+         //监听用户是否登录
+        socket.on('user', function(data){
+            $api.setStorage("uid",data.id);
+            $api.setStorage("lock_id",data.lock_id);
+            $api.setStorage("phone",data.phone);
+            open("main");
+            api.closeFrame({
+                name: 'login'
+            });
+            // alert(JSON.stringify(data));
+            console.log(data);
+        });
+
+        //绑定返回
+        socket.on("bind_res",function(data){
+            api.toast({
+                "msg":data.msg
+            });
+            if(data.status==1){
+                $api.setStorage("lock_id",data.lock_id);
+                open("main");
+                api.closeFrame({
+                    name: 'bind'
+                });
+            }else{
+                api.sendEvent({
+                    name: 'bindResEvent',
+                    extra: data
+                });
+            }
+        });
+
+        //设备状态
+        socket.on("lock_status",function(data){
+          console.log(data);
+          $api.setStorage("lock_lon",data.lon);
+          $api.setStorage("lock_lat",data.lat);
+            api.sendEvent({
+                name: 'lockStatusEvent',
+                extra: data
+            });
+        });
+
+
+        //错误信息
+        socket.on("error",function(msg){
+            api.alert(msg);
+            console.log(msg);
+        });
+    }
+
+    function connect(phone){
+        // alert(phone);
+        var socket=io(domain);
+        // 连接后登录
+        socket.on('connect', function(){
+            socket.emit('login', phone);
+            socket_g=socket;
+
+        });
+
+        socketOn(socket);
+
+    }
+
+    //打开页面
+    function open(name){
+         var header = $api.byId('header');
+        //适配iOS 7+，Android 4.4+状态栏
+        $api.fixStatusBar(header);
+
+        var headerPos = $api.offset(header);
+        var main = $api.byId('main');
+        var mainPos = $api.offset(main);
+        api.openFrame({
+            name: name,
+            url: 'html/'+name+'.html',
+            bounces: true,
+            rect: {
+                x: 0,
+                y: headerPos.h,
+                w: 'auto',
+                h: mainPos.h
+            },
+            fixedOn:name
+        });
+    }
+
+</script>
+</html>

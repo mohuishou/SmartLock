@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <title>title</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/btn.css"/>
+    <style>
+        body{
+
+        }
+        .btn{
+          position: absolute;
+          bottom:5px;
+        }
+        #open-main{
+          left: 5px;
+        }
+        #search-route{
+          right: 5px;
+        }
+
+
+    </style>
+</head>
+<body>
+  <button type="button" id="open-main" class="btn">返回主页</button>
+  <button type="button" id="search-route" class="btn">规划路线</button>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../script/zepto.min.js"></script>
+<script type="text/javascript">
+    apiready = function(){
+      var aMap = api.require('aMap');
+      var local={
+        lon:104.06,
+        lat:30.67
+      }
+      var w=$(window).width();
+      var h=$(window).height();
+      aMap.open({
+          rect: {
+              x: 0,
+              y: 0,
+              w: w,
+              h: h-50
+          },
+          showUserLocation: true,
+          zoomLevel: 11,
+          center: local,
+          fixedOn: api.frameName,
+          fixed: true
+      }, function(ret, err) {
+          if (ret.status) {
+              // alert(JSON.stringify(ret));
+          } else {
+            alert("地图初始化错误！");
+          }
+      });
+
+      //定位
+      aMap.getLocation(function(ret, err) {
+          if (ret.status) {
+            local.lon=ret.lon;
+            local.lat=ret.lat;
+            aMap.setCenter({
+                coords:local,
+                animation: false
+            });
+          } else {
+              alert("定位失败!");
+          }
+      });
+
+      var lock_position={
+        lon:$api.getStorage("lock_lon"),
+        lat:$api.getStorage("lock_lat")
+      }
+      if(lock_position.lon){
+        setLockPosition(lock_position.lon,lock_position.lat,aMap);
+      }
+
+      //监听设备连接状态
+      api.addEventListener({
+          name: 'lockStatusEvent'
+      }, function(ret, err) {
+          var data=ret.value;
+          lock_position.lon=data.lon;
+          lock_position.lat=data.lat;
+          //设置设备位置
+          setLockPosition(lock_position.lon,lock_position.lat,aMap);
+          if (!ret.value.status) {
+                alert("设备尚未连接！");
+          } else {
+              if(data.is_stolen!=0){
+                alert("设备被盗，请查看！！");
+              }
+              if(data.is_low_battery==1){
+                alert("设备电量不足！");
+              }
+          }
+      });
+
+
+      $("#search-route").click(function () {
+        api.actionSheet({
+          title: '请选择到达方式',
+          cancelTitle: '取消',
+          buttons: ['步行', '驾车']
+        }, function(ret, err) {
+            var index = ret.buttonIndex;
+            if(!lock_position.lon){
+              alert("尚未发现设备！");
+              return;
+            }
+            searchRoute(index-1,local,lock_position,aMap);
+        });
+      });
+
+      $("#open-main").click(function(){
+        api.sendEvent({
+            name: 'openMainEvent'
+        });
+        aMap.close();
+      });
+
+    };
+
+    //设置设备位置
+    function setLockPosition(lon,lat,aMap) {
+      aMap.addAnnotations({
+          annotations: [{
+              id: 1,
+              lon:lon,
+              lat:lat
+          }],
+          draggable: true,
+          timeInterval: 2.0
+      }, function(ret) {
+          if (ret.eventType == 'click') {
+              // alert(ret.id);
+          }
+      });
+
+      aMap.setBubble({
+          id: 1,
+          // bgImg: 'widget://res/bubble_bg.png',
+          content: {
+              title: 'SmartLock',
+              subTitle: '我的SmartLock',
+              illus: 'widget://res/lock.png'
+          },
+          styles: {
+              titleColor: '#000',
+              titleSize: 16,
+              subTitleColor: '#999',
+              subTitleSize: 12,
+              illusAlign: 'left'
+          }
+      }, function(ret) {
+          if (ret) {
+              // alert(JSON.stringify(ret));
+          }
+      });
+    }
+
+    //搜索导航路线
+    function searchRoute(i,local,end_position,aMap){
+      var types=[
+        "walk","drive","transit"
+      ];
+      if(!types[i]){
+        i=0;
+      }
+      var policy='drive_fee_first';
+      if(types==2){
+        policy="transit_time_first";
+      }
+
+      progressOn();
+      setTimeout(function () {
+        //搜索导航路线
+        aMap.searchRoute({
+            type: types[i],
+            policy: policy,
+            start: local,
+            end: end_position
+        }, function(ret, err) {
+            if (ret.status) {
+                aMap.drawRoute({
+                    id: 1,
+                    autoresizing: true,
+                    index: 0,
+                    styles: {
+                        walkLine: {
+                            width: 3,
+                            color: '#698B22',
+                            lineDash: false,
+                            strokeImg: 'widget://res/arrow.png'
+                        },
+                        driveLine: {
+                            width: 6,
+                            color: '#0000EE',
+                            lineDash: false,
+                            strokeImg: 'widget://res/arrow.png'
+                        },
+                        busLine: {
+                            width: 4,
+                            color: '#00BFFF',
+                            lineDash: false,
+                            strokeImg: ''
+                        },
+                        icons: {
+                            start: '',
+                            end: '',
+                            bus: '',
+                            car: '',
+                            man: ''
+                        }
+                    }
+                });
+                progressOff();
+            } else {
+                api.alert({ msg: "路线规划失败"});
+                progressOff();
+            }
+        });
+      },1000);
+
+    }
+
+
+
+
+  function progressOn() {
+    setTimeout(function () {
+      api.showProgress({
+        style: 'default',
+        animationType: 'fade',
+        title: '努力加载中...',
+        text: '请稍后',
+        modal: true
+      });
+    },200);
+  }
+
+  function progressOff() {
+    api.hideProgress();
+  }
+</script>
+</html>
